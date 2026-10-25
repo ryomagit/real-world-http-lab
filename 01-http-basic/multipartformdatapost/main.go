@@ -6,6 +6,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"os"
 )
 
@@ -14,12 +15,15 @@ func main() {
 	writer := multipart.NewWriter(&buffer) // multipart/form-dataのリクエストボディを作成するためのライター
 	writer.WriteField("name", "test") // ファイル以外のフォームフィールド
 
-	// 個別のファイル書き込みio.Writerを作成する
-	fileWriter, err := writer.CreateFormFile("thumbnail", "photo.jpg")
+	part := make(textproto.MIMEHeader)
+	part.Set("Content-Type", "image/jpeg")
+	part.Set("Content-Disposition", `form-data; name="thumbnail"; filename="photo.jpg"`) // ファイルのMIMEヘッダーを作成する
+	fileWriter, err := writer.CreatePart(part) // ファイルのフォームフィールドを作成する
 	if err != nil {
 		panic(err)
 	}
-	readFile, err := os.Open("photo.jpg")
+
+	readFile, err := os.Open("photo.jpg") // ファイルを開く
 	if err != nil {
 		panic(err)
 	}
